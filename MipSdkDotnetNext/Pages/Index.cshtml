@@ -1,0 +1,115 @@
+﻿@page
+@model MipSdkDotnetNext.Pages.IndexModel
+@{
+    ViewData["Title"] = "Home";
+    var username = User.Identity?.Name ?? "Unknown User";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="@Url.Content("~/css/Index.css")" />
+</head>
+<body>
+    <div>
+        <h1>MIP SDK .NET Sample</h1>
+        <p>
+            The <a href="https://learn.microsoft.com/en-us/information-protection/develop/">
+                Microsoft Information Protection SDK
+            </a> enables labeling and protecting information.
+        </p>
+        <p>Welcome, @username!</p>
+    </div>
+
+    <form method="post">
+        @Html.AntiForgeryToken()
+        <div>
+            <label>Select Label:</label>
+            <select asp-for="SelectedLabelId" class="form-control">
+                <option value="">-- Select --</option>
+                @foreach (var label in Model.Labels)
+                {
+                    if (label.Children.Any())
+                    {
+                        <optgroup label="@label.Name">
+                            @foreach (var child in label.Children)
+                            {
+                                <option value="@child.Id">@child.Name</option>
+                            }
+                        </optgroup>
+                    }
+                    else
+                    {
+                        <option value="@label.Id">@label.Name</option>
+                    }
+                }
+            </select>
+
+            <div id="customProtectionFields" style="display:none; margin-top: 10px;">
+                <label>Emails (comma separated):</label>
+                <input type="text" name="CustomEmails" class="form-control" />
+
+                <label>Permissions:</label>
+                <select name="SelectedRights" class="form-control">
+                    <option value="View">View</option>
+                    <option value="Edit">Edit</option>
+                    <option value="All">All</option>
+                </select>
+
+            </div>
+        </div>
+
+        <br />
+
+        <div>
+            <button type="submit" asp-page-handler="Download">Download</button>
+        </div>
+    </form>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>UserId</th>
+                    <th>Id</th>
+                    <th>Title</th>
+                    <th>Completed</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Data)
+                {
+                    <tr>
+                        <td>@item.UserId</td>
+                        <td>@item.Id</td>
+                        <td>@item.Title</td>
+                        <td>@(item.Completed ? "True" : "False")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const dropdown = document.querySelector("select[name='SelectedLabelId']");
+            const customFields = document.getElementById("customProtectionFields");
+            const emailInput = document.querySelector("input[name='CustomEmails']");
+            const rightsSelect = document.querySelector("select[name='SelectedRights']");
+
+            const needsAdditionalInfo = '@(ViewData["NeedsAdditionalInfo"] ?? false)'.toLowerCase() === 'true';
+
+            if (needsAdditionalInfo) {
+                alert("Additional Info Required for the selected Label");
+                customFields.style.display = "block";
+            }
+
+            dropdown.addEventListener("change", function () {
+                // Clear custom fields when changing labels
+                customFields.style.display = "none";
+                if (emailInput) emailInput.value = "";
+                if (rightsSelect) rightsSelect.selectedIndex = 0;
+            });
+        });
+    </script>
+</body>
+</html>
